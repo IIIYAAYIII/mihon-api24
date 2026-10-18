@@ -40,10 +40,6 @@ android {
         versionCode = 38
         versionName = "24.0"
 
-        ndk {
-            abiFilters += listOf("arm64-v8a")
-        }
-
         buildConfigField("boolean", "TELEMETRY_INCLUDED", "${Config.includeTelemetry}")
         buildConfigField("boolean", "UPDATER_ENABLED", "${Config.enableUpdater}")
 
