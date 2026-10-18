@@ -38,7 +38,11 @@ android {
         applicationId = "app.mihon"
 
         versionCode = 38
-        versionName = "0.21.2"
+        versionName = "24.0"
+
+        ndk {
+            abiFilters += listOf("arm64-v8a")
+        }
 
         buildConfigField("boolean", "TELEMETRY_INCLUDED", "${Config.includeTelemetry}")
         buildConfigField("boolean", "UPDATER_ENABLED", "${Config.enableUpdater}")
@@ -126,9 +130,9 @@ android {
     splits {
         abi {
             isEnable = true
-            isUniversalApk = true
+            isUniversalApk = false
             reset()
-            include("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+            include("arm64-v8a")
         }
     }
 
@@ -217,7 +221,6 @@ dependencies {
     implementation(projects.data)
     implementation(projects.domain)
     implementation(projects.presentationCore)
-    implementation(projects.presentationWidget)
     implementation(projects.telemetry)
 
     // Compose

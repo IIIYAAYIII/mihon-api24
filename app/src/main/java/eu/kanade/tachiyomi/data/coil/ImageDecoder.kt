@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.data.coil
 
 import android.graphics.Bitmap
 import android.graphics.Matrix
+import android.os.Build
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.scale
 import ca.mpreg.imagedecoder.ImageDecoder
@@ -101,7 +102,11 @@ class ImageDecoder(private val resources: ImageSource, private val options: Opti
         // Copy RGBA pixels from the native buffer into a full-resolution bitmap.
         // We must do this while `res` (and its native memory) is still alive.
         // HDR frames are half-float RGBA.
-        val config = if (res.isHdr) Bitmap.Config.RGBA_F16 else Bitmap.Config.ARGB_8888
+        val config = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && res.isHdr) {
+            Bitmap.Config.RGBA_F16
+        } else {
+            Bitmap.Config.ARGB_8888
+        }
         val fullBitmap = createBitmap(srcWidth, srcHeight, config)
         res.image.rewind()
         fullBitmap.copyPixelsFromBuffer(res.image)
@@ -138,7 +143,11 @@ class ImageDecoder(private val resources: ImageSource, private val options: Opti
             ImageDecoder.open(it.inputStream()).use { dec -> dec.decodeNext() to dec.isHdr }
         }
         frame.use {
-            val config = if (isHdr) Bitmap.Config.RGBA_F16 else Bitmap.Config.ARGB_8888
+            val config = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && isHdr) {
+                Bitmap.Config.RGBA_F16
+            } else {
+                Bitmap.Config.ARGB_8888
+            }
             val bytesPerPixel = if (isHdr) 8 else 4
             val rowBytes = frame.width * bytesPerPixel
             val viewWidth = options.size.widthPx(options.scale) { frame.width }

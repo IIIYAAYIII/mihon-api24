@@ -1,6 +1,7 @@
 package eu.kanade.domain.base
 
 import android.content.Context
+import android.os.Build
 import eu.kanade.domain.base.BasePreferences.ExtensionInstaller
 import eu.kanade.tachiyomi.util.system.hasMiuiPackageInstaller
 import eu.kanade.tachiyomi.util.system.isShizukuInstalled
@@ -26,7 +27,9 @@ class ExtensionInstallerPreference(
         }
     }
 
-    override fun defaultValue() = if (context.hasMiuiPackageInstaller) {
+    override fun defaultValue() = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+        ExtensionInstaller.PRIVATE
+    } else if (context.hasMiuiPackageInstaller) {
         ExtensionInstaller.LEGACY
     } else {
         ExtensionInstaller.PACKAGEINSTALLER

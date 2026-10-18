@@ -306,7 +306,11 @@ object ImageUtil {
         val image = try {
             ImageDecoder.open(imageStream).use { it.decodeNext() to it.isHdr }.let { (res, hdr) ->
                 res.use {
-                    val config = if (hdr) Bitmap.Config.RGBA_F16 else Bitmap.Config.ARGB_8888
+                    val config = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && hdr) {
+                        Bitmap.Config.RGBA_F16
+                    } else {
+                        Bitmap.Config.ARGB_8888
+                    }
                     createBitmap(res.width, res.height, config).also { bitmap ->
                         res.image.rewind()
                         bitmap.copyPixelsFromBuffer(res.image)

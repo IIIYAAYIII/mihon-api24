@@ -71,7 +71,6 @@ import tachiyomi.core.common.preference.PreferenceStore
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.i18n.MR
-import tachiyomi.presentation.widget.WidgetManager
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.InjektScope
 import java.security.Security
@@ -102,8 +101,6 @@ class App : Application(), DefaultLifecycleObserver, SingletonImageLoader.Factor
     @Inject private lateinit var sourceManager: Lazy<SourceManager>
 
     @Inject private lateinit var extensionManager: Lazy<ExtensionManager>
-
-    @Inject private lateinit var widgetManager: WidgetManager
 
     @Inject private lateinit var migrations: Set<Migration>
 
@@ -185,9 +182,6 @@ class App : Application(), DefaultLifecycleObserver, SingletonImageLoader.Factor
             .launchIn(scope)
 
         setAppCompatDelegateThemeMode(uiPreferences.themeMode.get())
-
-        // Updates widget update
-        widgetManager.init(scope)
 
         if (!LogcatLogger.isInstalled) {
             val minLogPriority = when {

@@ -1,0 +1,47 @@
+name: Build Mihon API 24 (arm64)
+
+on:
+  workflow_dispatch:
+    inputs:
+      dist:
+        description: 'Distribution type'
+        required: false
+        default: 'ci'
+        type: choice
+        options:
+          - ci
+          - local
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build arm64 APK for Android 7+ (API 24)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version-file: .github/.java-version
+          distribution: temurin
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+
+      - name: Build arm64 Release APK
+        run: ./gradlew assembleRelease -Pdist=${{ inputs.dist || 'ci' }}
+
+      - name: Upload arm64 APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: mihon-api24-arm64-v8a
+          path: app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
