@@ -134,6 +134,7 @@ android {
 
     packaging {
         jniLibs {
+            useLegacyPackaging = true
             keepDebugSymbols += listOf(
                 "libandroidx.graphics.path",
                 "libarchive-jni",

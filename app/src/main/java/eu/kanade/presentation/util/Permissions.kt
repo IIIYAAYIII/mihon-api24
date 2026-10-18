@@ -1,5 +1,6 @@
 package eu.kanade.presentation.util
 
+import android.os.Build
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -13,6 +14,10 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 
 @Composable
 fun rememberRequestPackageInstallsPermissionState(initialValue: Boolean = false): Boolean {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+        return true
+    }
+
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
