@@ -80,7 +80,6 @@ jobs:
             - **说明**: 适配 Android 7.0 的专用版本，精简了桌面小部件，图源插件默认使用私有安装器。
           files: |
             mihon-${{ inputs.tag_name || 'v24.0' }}-arm64-v8a.apk
-            app/build/outputs/apk/release/app-arm64-v8a-release.apk
           make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
