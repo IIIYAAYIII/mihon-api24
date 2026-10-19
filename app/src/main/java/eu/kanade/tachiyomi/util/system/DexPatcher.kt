@@ -15,6 +15,8 @@ import java.util.zip.ZipOutputStream
 
 object DexPatcher {
 
+    private const val PATCHED_DIR_NAME = "patched_exts"
+
     /**
      * Clears cached patched APKs and odex files if the host app has been updated.
      */
