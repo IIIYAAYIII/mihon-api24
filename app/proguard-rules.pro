@@ -1,10 +1,17 @@
 # Obfuscation is enabled for APK size optimization.
 # Types exposed to extensions are preserved by source-api/consumer-proguard.pro.
+-keep class eu.kanade.tachiyomi.source.** { *; }
+-keepclassmembers class eu.kanade.tachiyomi.source.** { *; }
+-keep class eu.kanade.tachiyomi.network.** { *; }
+-keepclassmembers class eu.kanade.tachiyomi.network.** { *; }
+-keep class eu.kanade.tachiyomi.AppInfo { *; }
+-keep class eu.kanade.tachiyomi.util.JsoupExtensionsKt { *; }
 
-# PackageParser patcher uses reflection on PackageParser and Unsafe
+# PackageParser and Dex patcher
 -dontwarn android.content.pm.PackageParser
 -dontwarn sun.misc.Unsafe
 -keep class eu.kanade.tachiyomi.util.system.PackageParserPatcher { *; }
+-keep class eu.kanade.tachiyomi.util.system.DexPatcher { *; }
 
 # Injekt reads the injected type from the generic superclass of its type tokens
 -keepattributes Signature
