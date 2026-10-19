@@ -1,6 +1,7 @@
 package tachiyomi.domain.storage.service
 
 import android.content.Context
+import android.os.Build
 import androidx.core.net.toUri
 import com.hippo.unifile.UniFile
 import dev.zacsweers.metro.AppScope
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.shareIn
 import mihon.core.metro.AppCoroutineScope
+import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 
 @Inject
@@ -59,8 +61,30 @@ class StorageManager(
     }
 
     private fun getBaseDir(uri: String): UniFile? {
-        return UniFile.fromUri(context, uri.toUri())
-            .takeIf { it?.exists() == true }
+        val file = UniFile.fromUri(context, uri.toUri())
+        if (file?.exists() == true) {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+                file.filePath?.let { rawPath ->
+                    val rawFile = File(rawPath)
+                    if (!rawFile.exists()) {
+                        rawFile.mkdirs()
+                    }
+                    if (rawFile.exists()) {
+                        UniFile.fromFile(rawFile)?.let { return it }
+                    }
+                }
+            }
+            return file
+        }
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            file?.filePath?.let { rawPath ->
+                val rawFile = File(rawPath)
+                if (rawFile.mkdirs() || rawFile.exists()) {
+                    UniFile.fromFile(rawFile)?.let { return it }
+                }
+            }
+        }
+        return file?.takeIf { it.exists() }
     }
 
     fun getAutomaticBackupsDirectory(): UniFile? {
@@ -80,7 +104,16 @@ class StorageManager(
         childDirectories[name]
             ?.takeIf { (cachedParent, directory) -> cachedParent === parent && directory.exists() }
             ?.let { (_, directory) -> return directory }
-        return parent.createDirectory(name)?.also { childDirectories[name] = parent to it }
+        var dir = parent.createDirectory(name)
+        if (dir == null && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            parent.filePath?.let { parentPath ->
+                val childFile = File(parentPath, name)
+                if (childFile.exists() || childFile.mkdirs()) {
+                    dir = UniFile.fromFile(childFile)
+                }
+            }
+        }
+        return dir?.also { childDirectories[name] = parent to it }
     }
 }
 

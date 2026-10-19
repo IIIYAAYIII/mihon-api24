@@ -6,6 +6,7 @@ import mihon.gradle.getCurrentTime
 import mihon.gradle.getLatestCommitCount
 import mihon.gradle.getLatestCommitSha
 import mihon.gradle.getLatestCommitTime
+import mihon.gradle.tasks.CompileTimeCompatDexTask
 import mihon.gradle.tasks.ReplaceShortcutsPlaceholderTask
 import java.io.FileInputStream
 import java.util.Properties
@@ -441,6 +442,19 @@ androidComponents {
             shortcutsFile.set(projectDir.resolve("src/main/shortcuts.xml"))
         }
         resSource.addGeneratedSourceDirectory(replaceShortcutsPlaceholderTask) { it.outputDir }
+
+        variant.sources.assets?.let { assetsSource ->
+            val compileTimeCompatDexTask = tasks.register<CompileTimeCompatDexTask>(
+                "compile${variantName}TimeCompatDex",
+            ) {
+                sourceDir.set(projectDir.resolve("src/timeCompat/java"))
+                compileClasspath.from(configurations.getByName("coreLibraryDesugaring"))
+                bootClasspath.from(android.bootClasspath)
+                buildToolsVersion.set(android.buildToolsVersion)
+                sdkDirectory.set(android.sdkDirectory)
+            }
+            assetsSource.addGeneratedSourceDirectory(compileTimeCompatDexTask) { it.outputDir }
+        }
     }
 
     onVariants(selector().withFlavor("default" to "standard")) {

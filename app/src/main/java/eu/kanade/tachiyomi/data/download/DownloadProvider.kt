@@ -2,7 +2,9 @@ package eu.kanade.tachiyomi.data.download
 
 import android.content.ContentResolver
 import android.content.Context
+import android.os.Build
 import com.hippo.unifile.UniFile
+import java.io.File
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
@@ -61,7 +63,15 @@ class DownloadProvider(
         }
 
         val sourceDirName = getSourceDirName(source)
-        val sourceDir = downloadsDir.createDirectory(sourceDirName)
+        var sourceDir = downloadsDir.createDirectory(sourceDirName)
+        if (sourceDir == null && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            downloadsDir.filePath?.let { path ->
+                val f = File(path, sourceDirName)
+                if (f.exists() || f.mkdirs()) {
+                    sourceDir = UniFile.fromFile(f)
+                }
+            }
+        }
         if (sourceDir == null) {
             val displayablePath = downloadsDir.displayablePath + "/$sourceDirName"
             logcat(LogPriority.ERROR) { "Failed to create source download directory: $displayablePath" }
@@ -71,7 +81,15 @@ class DownloadProvider(
         }
 
         val mangaDirName = getMangaDirName(mangaTitle)
-        val mangaDir = sourceDir.createDirectory(mangaDirName)
+        var mangaDir = sourceDir.createDirectory(mangaDirName)
+        if (mangaDir == null && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            sourceDir.filePath?.let { path ->
+                val f = File(path, mangaDirName)
+                if (f.exists() || f.mkdirs()) {
+                    mangaDir = UniFile.fromFile(f)
+                }
+            }
+        }
         if (mangaDir == null) {
             val displayablePath = sourceDir.displayablePath + "/$mangaDirName"
             logcat(LogPriority.ERROR) { "Failed to create manga download directory: $displayablePath" }

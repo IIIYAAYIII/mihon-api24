@@ -12,6 +12,7 @@ import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.SourceFactory
 import eu.kanade.tachiyomi.util.lang.Hash
 import eu.kanade.tachiyomi.util.storage.copyAndSetReadOnlyTo
+import eu.kanade.tachiyomi.util.system.isPackageInstalled
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -67,15 +68,23 @@ internal object ExtensionLoader {
         val currentExtension = getExtensionPackageInfoFromPkgName(context, extension.packageName)
 
         if (currentExtension != null) {
-            check(
-                PackageInfoCompat.getLongVersionCode(extension) >=
-                    PackageInfoCompat.getLongVersionCode(currentExtension),
-            ) { "The installed version is newer, and downgrading isn't allowed" }
-
             val extensionSignatures = getSignatures(extension)
             check(!extensionSignatures.isNullOrEmpty()) { "The extension isn't signed" }
-            check(extensionSignatures.containsAll(getSignatures(currentExtension)!!)) {
-                "It isn't signed with the same key as the installed extension"
+
+            val currentSignatures = getSignatures(currentExtension)
+            val isCurrentShared = context.isPackageInstalled(extension.packageName)
+
+            if (!currentSignatures.isNullOrEmpty() && !extensionSignatures.containsAll(currentSignatures)) {
+                check(!isCurrentShared) {
+                    "It isn't signed with the same key as the installed extension"
+                }
+                logcat(LogPriority.INFO) { "Replacing private extension ${extension.packageName} with new signing key from store" }
+            }
+
+            val currentVersionCode = PackageInfoCompat.getLongVersionCode(currentExtension)
+            val newVersionCode = PackageInfoCompat.getLongVersionCode(extension)
+            if (newVersionCode < currentVersionCode && isCurrentShared) {
+                error("The installed version is newer, and downgrading isn't allowed")
             }
         }
 
@@ -402,7 +411,17 @@ internal object ExtensionLoader {
             } else {
                 null
             }
-            DelegateLastClassLoaderCompat(loadApk.absolutePath, null, context.classLoader, optDir)
+            val dexPath = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+                val timeCompatDex = eu.kanade.tachiyomi.util.system.DexPatcher.getTimeCompatDex(context)
+                if (timeCompatDex != null && timeCompatDex.exists()) {
+                    "${loadApk.absolutePath}${File.pathSeparator}${timeCompatDex.absolutePath}"
+                } else {
+                    loadApk.absolutePath
+                }
+            } else {
+                loadApk.absolutePath
+            }
+            DelegateLastClassLoaderCompat(dexPath, null, context.classLoader, optDir)
         } catch (e: Exception) {
             logcat(LogPriority.ERROR, e) { "Extension load error: $extName ($pkgName)" }
             return notLoaded(Extension.NotLoaded.Reason.Failed(e.rootMessage, e.stackTraceToString()), libVersion)

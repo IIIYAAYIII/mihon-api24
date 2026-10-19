@@ -35,10 +35,48 @@ object DexPatcher {
                 logcat(LogPriority.INFO) { "App updated (code $lastVersionCode -> $currentVersionCode), clearing extension DEX caches" }
                 File(context.codeCacheDir, PATCHED_DIR_NAME).deleteRecursively()
                 File(context.codeCacheDir, "ext_opt").deleteRecursively()
+                File(context.codeCacheDir, "time_compat.dex").delete()
                 prefs.edit().putInt("last_version_code", currentVersionCode).apply()
             }
         } catch (e: Exception) {
             logcat(LogPriority.WARN, e) { "Failed to clean DEX patcher cache on app update" }
+        }
+    }
+
+    /**
+     * Extracts the java.time compatibility DEX from assets to codeCacheDir/time_compat.dex
+     * on Android < 8.0 (API < 26) so that modern Keiyoushi extensions targeting API 26+ can
+     * resolve java.time.* classes and delegate to Mihon's desugared j$.time.* classes.
+     */
+    fun getTimeCompatDex(context: Context): File? {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            return null
+        }
+        val target = File(context.codeCacheDir, "time_compat.dex")
+        val baseApk = File(context.applicationInfo.sourceDir)
+        val baseModified = if (baseApk.exists()) baseApk.lastModified() else 0L
+
+        if (target.exists() && target.length() > 0 && target.lastModified() >= baseModified) {
+            return target
+        }
+
+        return try {
+            context.assets.open("time_compat.dex").use { input ->
+                val temp = File.createTempFile("time_compat_", ".tmp", context.codeCacheDir)
+                temp.outputStream().use { output ->
+                    input.copyTo(output)
+                }
+                if (target.exists()) target.delete()
+                if (temp.renameTo(target)) {
+                    target.setLastModified(baseModified)
+                    target
+                } else {
+                    temp
+                }
+            }
+        } catch (e: Exception) {
+            logcat(LogPriority.WARN, e) { "Failed to extract time_compat.dex from assets" }
+            null
         }
     }
 

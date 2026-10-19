@@ -15,8 +15,10 @@ import eu.kanade.tachiyomi.network.NetworkHelper
 import eu.kanade.tachiyomi.network.await
 import eu.kanade.tachiyomi.util.storage.getUriCompat
 import eu.kanade.tachiyomi.util.system.isPackageInstalled
+import eu.kanade.tachiyomi.util.system.toast
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
@@ -25,6 +27,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runInterruptible
+import kotlinx.coroutines.withContext
 import logcat.LogPriority
 import mihon.core.metro.AppCoroutineScope
 import okhttp3.OkHttpClient
@@ -88,20 +91,27 @@ class ExtensionInstaller(
                     }
                 }
 
-                // The store's index names the apk, but nothing ties what's served there to the store's key
-                val packageInfo = ExtensionLoader.getArchivePackageInfo(context, tmpFile)
-                    ?.takeIf { extension.store.signingKey in ExtensionLoader.getSignatures(it).orEmpty() }
-                if (packageInfo == null) {
+                val parsedPackage = ExtensionLoader.getArchivePackageInfo(context, tmpFile)
+                if (parsedPackage == null) {
                     tmpFile.delete()
-                    throw Exception("Extension isn't signed with the key of ${extension.store.name}")
+                    throw Exception("解析安装包失败 (PackageParser error)")
+                }
+
+                val signatures = ExtensionLoader.getSignatures(parsedPackage).orEmpty()
+                if (extension.store.signingKey !in signatures) {
+                    tmpFile.delete()
+                    throw Exception("签名与商店不匹配 (Key mismatch: expected ${extension.store.signingKey})")
                 }
 
                 ensureActive()
                 step.value = InstallStep.Installing
-                installApk(downloadId, tmpFile, packageInfo, isUpdateForPrivatelyInstalled)
+                installApk(downloadId, tmpFile, parsedPackage, isUpdateForPrivatelyInstalled)
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
-                logcat(LogPriority.INFO, e)
+                logcat(LogPriority.ERROR, e) { "Extension download and install error: ${extension.pkgName}" }
+                withContext(Dispatchers.Main) {
+                    context.toast("${extension.name} 安装失败: ${e.message}")
+                }
                 step.value = InstallStep.Error
             }
         }
@@ -165,7 +175,10 @@ class ExtensionInstaller(
             ExtensionLoader.installPrivateExtensionFile(context, tempFile, packageInfo)
             updateInstallStep(downloadId, InstallStep.Installed)
         } catch (e: Exception) {
-            logcat(LogPriority.INFO, e) { "Failed to install extension privately" }
+            logcat(LogPriority.ERROR, e) { "Failed to install extension privately: ${packageInfo.packageName}" }
+            withContext(Dispatchers.Main) {
+                context.toast("${packageInfo.packageName} 私有安装失败: ${e.message}")
+            }
             updateInstallStep(downloadId, InstallStep.Error)
         }
 
