@@ -15,7 +15,30 @@ import java.util.zip.ZipOutputStream
 
 object DexPatcher {
 
-    private const val PATCHED_DIR_NAME = "patched_exts"
+    /**
+     * Clears cached patched APKs and odex files if the host app has been updated.
+     */
+    fun cleanIfAppUpdated(context: Context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) return
+        try {
+            val prefs = context.getSharedPreferences("dex_patcher_state", Context.MODE_PRIVATE)
+            @Suppress("DEPRECATION")
+            val currentVersionCode = try {
+                context.packageManager.getPackageInfo(context.packageName, 0).versionCode
+            } catch (_: Exception) {
+                0
+            }
+            val lastVersionCode = prefs.getInt("last_version_code", -1)
+            if (lastVersionCode != currentVersionCode) {
+                logcat(LogPriority.INFO) { "App updated (code $lastVersionCode -> $currentVersionCode), clearing extension DEX caches" }
+                File(context.codeCacheDir, PATCHED_DIR_NAME).deleteRecursively()
+                File(context.codeCacheDir, "ext_opt").deleteRecursively()
+                prefs.edit().putInt("last_version_code", currentVersionCode).apply()
+            }
+        } catch (e: Exception) {
+            logcat(LogPriority.WARN, e) { "Failed to clean DEX patcher cache on app update" }
+        }
+    }
 
     /**
      * Checks if the given APK file requires DEX version downgrading (e.g. from 038/039 to 035)
@@ -34,8 +57,14 @@ object DexPatcher {
             val patchDir = File(context.codeCacheDir, PATCHED_DIR_NAME).apply { mkdirs() }
             val patchedApk = File(patchDir, "${sourceApk.nameWithoutExtension}_api24.apk")
 
-            // If already patched and up to date, reuse it
-            if (patchedApk.exists() && patchedApk.lastModified() >= sourceApk.lastModified()) {
+            val baseApk = File(context.applicationInfo.sourceDir)
+            val baseModified = if (baseApk.exists()) baseApk.lastModified() else 0L
+
+            // If already patched and up to date relative to both source and base APK, reuse it
+            if (patchedApk.exists() &&
+                patchedApk.lastModified() >= sourceApk.lastModified() &&
+                patchedApk.lastModified() >= baseModified
+            ) {
                 return patchedApk
             }
 

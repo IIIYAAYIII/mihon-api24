@@ -140,6 +140,7 @@ class App : Application(), DefaultLifecycleObserver, SingletonImageLoader.Factor
 
         // Allow parsing extensions compiled with minSdkVersion >= 26 on Android 7
         eu.kanade.tachiyomi.util.system.PackageParserPatcher.patch()
+        eu.kanade.tachiyomi.util.system.DexPatcher.cleanIfAppUpdated(this)
 
         setupNotificationChannels()
 
