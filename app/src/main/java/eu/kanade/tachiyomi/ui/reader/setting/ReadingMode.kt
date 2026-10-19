@@ -77,16 +77,7 @@ enum class ReadingMode(
         }
 
         fun toViewer(preference: Int?, activity: ReaderActivity): Viewer {
-            if (activity.appGraph.basePreferences.highQualityRenderer.get()) {
-                return when (fromPreference(preference)) {
-                    LEFT_TO_RIGHT -> WebGpuViewer(activity, isReversed = false, isVertical = false)
-                    RIGHT_TO_LEFT -> WebGpuViewer(activity, isReversed = true, isVertical = false)
-                    VERTICAL -> WebGpuViewer(activity, isReversed = false, isVertical = true)
-                    WEBTOON -> WebGpuViewerContinuous(activity, useGap = false)
-                    CONTINUOUS_VERTICAL -> WebGpuViewerContinuous(activity, useGap = true)
-                    DEFAULT -> throw IllegalStateException("Preference value must be resolved: $preference")
-                }
-            }
+            // High quality renderer is bypassed as libwebgpu_c_bundled.so is excluded for APK size optimization
             return when (fromPreference(preference)) {
                 LEFT_TO_RIGHT -> L2RPagerViewer(activity)
                 RIGHT_TO_LEFT -> R2LPagerViewer(activity)

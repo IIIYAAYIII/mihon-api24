@@ -96,6 +96,9 @@ internal object ExtensionLoader {
 
     fun uninstallPrivateExtension(context: Context, pkgName: String) {
         File(getPrivateExtensionDir(context), "$pkgName.$PRIVATE_EXTENSION_EXTENSION").delete()
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            eu.kanade.tachiyomi.util.system.DexPatcher.deletePatchedApk(context, pkgName)
+        }
     }
 
     fun getArchivePackageInfo(context: Context, file: File): PackageInfo? {
@@ -389,7 +392,17 @@ internal object ExtensionLoader {
         }
 
         val classLoader = try {
-            DelegateLastClassLoaderCompat(appInfo.sourceDir, null, context.classLoader)
+            val loadApk = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+                eu.kanade.tachiyomi.util.system.DexPatcher.getPatchedApk(context, File(appInfo.sourceDir))
+            } else {
+                File(appInfo.sourceDir)
+            }
+            val optDir = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+                File(context.codeCacheDir, "ext_opt").apply { mkdirs() }.absolutePath
+            } else {
+                null
+            }
+            DelegateLastClassLoaderCompat(loadApk.absolutePath, null, context.classLoader, optDir)
         } catch (e: Exception) {
             logcat(LogPriority.ERROR, e) { "Extension load error: $extName ($pkgName)" }
             return notLoaded(Extension.NotLoaded.Reason.Failed(e.rootMessage, e.stackTraceToString()), libVersion)

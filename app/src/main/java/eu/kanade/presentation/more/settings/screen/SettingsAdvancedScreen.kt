@@ -128,7 +128,7 @@ object SettingsAdvancedScreen : SearchableSettings {
             getDataGroup(),
             getNetworkGroup(networkPreferences = networkPreferences),
             getLibraryGroup(libraryPreferences = libraryPreferences),
-            getReaderGroup(basePreferences = basePreferences),
+            // getReaderGroup omitted because WebGPU renderer is excluded for APK size optimization
             getExtensionsGroup(basePreferences = basePreferences),
         )
     }

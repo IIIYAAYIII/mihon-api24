@@ -137,6 +137,7 @@ android {
     packaging {
         jniLibs {
             useLegacyPackaging = true
+            excludes += listOf("**/libwebgpu_c_bundled.so")
         }
         resources {
             excludes += setOf(

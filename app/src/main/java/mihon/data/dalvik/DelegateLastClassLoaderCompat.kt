@@ -1,8 +1,9 @@
 package mihon.data.dalvik
 
 import android.os.Build
+import dalvik.system.BaseDexClassLoader
 import dalvik.system.DelegateLastClassLoader
-import dalvik.system.PathClassLoader
+import java.io.File
 import java.net.URL
 import java.util.Collections
 import java.util.Enumeration
@@ -12,25 +13,27 @@ fun DelegateLastClassLoaderCompat(
     dexPath: String,
     librarySearchPath: String?,
     parent: ClassLoader,
+    optimizedDirectory: String? = null,
 ): ClassLoader {
     // ART recognizes the built-in loader and maps app images compiled for this app's class loader chain, and before
     // Android 17 a damaged one crashes every launch until the app is updated. ART doesn't recognize the backport.
     return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.CINNAMON_BUN) {
         DelegateLastClassLoader(dexPath, librarySearchPath, parent)
     } else {
-        DelegateLastPathClassLoader(dexPath, librarySearchPath, parent)
+        DelegateLastPathClassLoader(dexPath, optimizedDirectory, librarySearchPath, parent)
     }
 }
 
 /**
- * A [PathClassLoader] that looks up classes like [DelegateLastClassLoader]: the boot class loader first, then its own
+ * A [BaseDexClassLoader] that looks up classes like [DelegateLastClassLoader]: the boot class loader first, then its own
  * dex path, then the parent.
  */
 private class DelegateLastPathClassLoader(
     dexPath: String,
+    optimizedDirectory: String?,
     librarySearchPath: String?,
     parent: ClassLoader,
-) : PathClassLoader(dexPath, librarySearchPath, parent) {
+) : BaseDexClassLoader(dexPath, optimizedDirectory?.let(::File), librarySearchPath, parent) {
 
     private val bootClassLoader: ClassLoader? = Any::class.java.classLoader
 

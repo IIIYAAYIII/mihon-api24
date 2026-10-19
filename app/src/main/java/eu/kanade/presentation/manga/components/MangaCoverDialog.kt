@@ -80,7 +80,7 @@ fun MangaCoverDialog(
     onEditClick: ((EditCoverAction) -> Unit)?,
     onDismissRequest: () -> Unit,
 ) {
-    val useNewRenderer = LocalContext.current.appGraph.basePreferences.highQualityRenderer.get()
+    val useNewRenderer = false
     val view = LocalView.current
 
     Dialog(
