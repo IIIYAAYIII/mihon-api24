@@ -88,3 +88,4 @@ When adding features, upgrading libraries, or modifying code:
 2. **Watch for XML resources**: Do not introduce `<adaptive-icon>`, `android:fontFamily` without compat namespace, or Oreo-only XML attributes into unqualified resource directories.
 3. **Keep ABI restricted to `arm64-v8a`**: Do not remove ABI splits or change `useLegacyPackaging = true` unless intentionally refactoring build outputs.
 4. **Preserve private extension loading**: Keep `ExtensionInstaller.PRIVATE` functional as Android 7 lacks modern package installation session APIs.
+5. **Release Workflow Triggering Control**: Do not autonomously trigger build/release GitHub Actions workflows (`gh workflow run` or `workflow_dispatch`) after code modifications. Build and release workflows must strictly be triggered by the user personally or executed only upon explicit user instruction.
