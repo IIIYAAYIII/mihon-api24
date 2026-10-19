@@ -82,8 +82,13 @@ jobs:
             - **CPU 架构 (ABI)**: `arm64-v8a`
             - **版本号 (Version)**: 24.0
             - **说明**: 适配 Android 7.0 的专用版本，精简了桌面小部件，图源插件默认使用私有安装器。
+            - **更新内容**:
+              - 修复 Keiyoushi 图源插件最低版本 (minSdkVersion 26) 无法安装的问题。
+              - 深度 APK 体积瘦身（移除 native 调试符号、精简无用语言包、排除 telemetry 遥测）。
+              - 修复 Android 7.0 桌面启动器图标偏小的问题，生成满幅标准尺寸矢量/光栅图标。
           files: |
             mihon-${{ inputs.tag_name || 'v24.0' }}-arm64-v8a.apk
+          overwrite_files: true
           make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
