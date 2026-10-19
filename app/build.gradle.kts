@@ -43,6 +43,8 @@ android {
         buildConfigField("boolean", "TELEMETRY_INCLUDED", "${Config.includeTelemetry}")
         buildConfigField("boolean", "UPDATER_ENABLED", "${Config.enableUpdater}")
 
+        resourceConfigurations += listOf("en", "zh", "zh-rCN", "zh-rTW", "zh-rHK")
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -135,18 +137,13 @@ android {
     packaging {
         jniLibs {
             useLegacyPackaging = true
-            keepDebugSymbols += listOf(
-                "libandroidx.graphics.path",
-                "libarchive-jni",
-                "libconscrypt_jni",
-                "libimagedecoder",
-                "libquickjs",
-                "libsqlite3x",
-            )
-                .map { "**/$it.so" }
         }
         resources {
             excludes += setOf(
+                "DebugProbesKt.bin",
+                "**/*.proto",
+                "META-INF/*.kotlin_module",
+                "META-INF/versions/**",
                 "kotlin-tooling-metadata.json",
                 "LICENSE.txt",
                 "META-INF/**/*.properties",

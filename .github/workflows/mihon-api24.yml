@@ -50,7 +50,11 @@ jobs:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
       - name: Build arm64 Release APK
-        run: ./gradlew assembleRelease -Pdist=${{ inputs.dist || 'ci' }}
+        run: ./gradlew assembleRelease -Pdist=${{ inputs.dist || 'ci' }} -Pinclude-telemetry=false
+
+      - name: Show APK Size
+        run: |
+          ls -lh app/build/outputs/apk/release/
 
       - name: Prepare APKs
         run: |

@@ -1,4 +1,10 @@
--dontobfuscate
+# Obfuscation is enabled for APK size optimization.
+# Types exposed to extensions are preserved by source-api/consumer-proguard.pro.
+
+# PackageParser patcher uses reflection on PackageParser and Unsafe
+-dontwarn android.content.pm.PackageParser
+-dontwarn sun.misc.Unsafe
+-keep class eu.kanade.tachiyomi.util.system.PackageParserPatcher { *; }
 
 # Injekt reads the injected type from the generic superclass of its type tokens
 -keepattributes Signature

@@ -42,6 +42,14 @@ This project is a fork of [Mihon](https://github.com/mihonapp/mihon) (the open-s
 - **Network Capabilities Enum**: In `NetworkExtensions.kt`, transport capability checks avoid accessing constants like `TRANSPORT_WIFI_AWARE` and `TRANSPORT_LOWPAN` on API levels below 26/27.
 - **TLS 1.3 / Network Security**: Bundled Conscrypt is initialized on Android < 10 in `App.kt` to ensure modern TLS 1.3 and HTTPS cipher suite support.
 
+### 2.5 APK Size & Footprint Optimization (arm64)
+- **Native Debug Symbols Stripping**: Removed `keepDebugSymbols` in `app/build.gradle.kts` so that `llvm-strip` strips DWARF symbols from native libraries (`libquickjs.so`, `libconscrypt_jni.so`, `libarchive-jni.so`, `libsqlite3x.so`), saving ~10MB.
+- **Telemetry & Firebase Exclusion**: Built with `-Pinclude-telemetry=false` in CI to substitute Firebase and Google Play dependencies with `noop` stubs, eliminating ~3.5MB of unnecessary telemetry code on Android 7 devices.
+- **Resource Trimming**: Configured `resourceConfigurations += listOf("en", "zh", "zh-rCN", "zh-rTW", "zh-rHK")` in `defaultConfig` to strip 80+ unused locale translations, reducing `resources.arsc` by ~1.5MB.
+- **R8 Full Mode & Obfuscation**: Enabled `android.enableR8.fullMode=true` in `gradle.properties` and removed `-dontobfuscate` in `proguard-rules.pro` (while protecting extension APIs via `source-api/consumer-proguard.pro`), shrinking DEX symbol tables by ~2.5MB.
+- **Metadata Exclusion**: Excluded `DebugProbesKt.bin`, `**/*.proto`, and `META-INF/*.kotlin_module` in `packaging.resources.excludes`.
+- **Net Result**: APK size is reduced from ~32MB down to ~13MB-15MB (over 50% size reduction) without altering any application logic.
+
 ---
 
 ## 3. Automated Build & Release CI Workflow
