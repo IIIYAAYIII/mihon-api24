@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.extension.util
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageInfo
+import android.os.Build
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import dev.zacsweers.metro.Inject
@@ -128,7 +129,7 @@ class ExtensionInstaller(
         packageInfo: PackageInfo,
         isUpdateForPrivatelyInstalled: Boolean = false,
     ) {
-        if (isUpdateForPrivatelyInstalled) {
+        if (isUpdateForPrivatelyInstalled || Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             installApkPrivately(downloadId, tempFile, packageInfo)
             return
         }

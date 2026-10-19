@@ -20,7 +20,9 @@ class ExtensionInstallerPreference(
     override fun key() = "extension_installer"
 
     val entries get() = ExtensionInstaller.entries.run {
-        if (context.hasMiuiPackageInstaller) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            listOf(ExtensionInstaller.PRIVATE)
+        } else if (context.hasMiuiPackageInstaller) {
             filter { it != ExtensionInstaller.PACKAGEINSTALLER }
         } else {
             toList()
@@ -36,6 +38,9 @@ class ExtensionInstallerPreference(
     }
 
     private fun check(value: ExtensionInstaller): ExtensionInstaller {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            return ExtensionInstaller.PRIVATE
+        }
         when (value) {
             ExtensionInstaller.PACKAGEINSTALLER -> {
                 if (context.hasMiuiPackageInstaller) return ExtensionInstaller.LEGACY

@@ -99,6 +99,7 @@ internal object ExtensionLoader {
     }
 
     fun getArchivePackageInfo(context: Context, file: File): PackageInfo? {
+        eu.kanade.tachiyomi.util.system.PackageParserPatcher.patch()
         return context.packageManager.getPackageArchiveInfo(file.absolutePath, PACKAGE_FLAGS)
     }
 
@@ -144,7 +145,7 @@ internal object ExtensionLoader {
                 }
 
                 val path = it.absolutePath
-                pkgManager.getPackageArchiveInfo(path, PACKAGE_FLAGS)
+                getArchivePackageInfo(context, it)
                     ?.also { pkg -> pkg.applicationInfo?.fixBasePaths(path) }
             }
             ?.filter { isPackageAnExtension(it) }
@@ -214,7 +215,7 @@ internal object ExtensionLoader {
     private fun getExtensionInfoFromPkgName(context: Context, pkgName: String): ExtensionInfo? {
         val privateExtensionFile = File(getPrivateExtensionDir(context), "$pkgName.$PRIVATE_EXTENSION_EXTENSION")
         val privatePkg = if (privateExtensionFile.isFile) {
-            context.packageManager.getPackageArchiveInfo(privateExtensionFile.absolutePath, PACKAGE_FLAGS)
+            getArchivePackageInfo(context, privateExtensionFile)
                 ?.takeIf { isPackageAnExtension(it) }
                 ?.let {
                     it.applicationInfo?.fixBasePaths(privateExtensionFile.absolutePath)

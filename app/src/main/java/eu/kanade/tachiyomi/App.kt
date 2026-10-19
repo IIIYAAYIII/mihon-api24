@@ -138,6 +138,9 @@ class App : Application(), DefaultLifecycleObserver, SingletonImageLoader.Factor
             Security.insertProviderAt(Conscrypt.newProvider(), 1)
         }
 
+        // Allow parsing extensions compiled with minSdkVersion >= 26 on Android 7
+        eu.kanade.tachiyomi.util.system.PackageParserPatcher.patch()
+
         setupNotificationChannels()
 
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)
