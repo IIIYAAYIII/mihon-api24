@@ -123,6 +123,8 @@
     <string name="pref_clear_cookies">清除 Cookie</string>
     <string name="pref_clear_database">清除資料庫</string>
     <string name="version">版本</string>
+    <string name="about_android7_backport_title">Android 7.0 適配版本</string>
+    <string name="about_android7_backport_summary">基於原 Mihon 專案修改，專為 Android 7.0+ (API 24, arm64) 裝置適配執行。\n修改作者：%s</string>
     <string name="pref_enable_acra">傳送錯誤報告</string>
     <string name="password">密碼</string>
     <string name="login">登入</string>

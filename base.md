@@ -5,6 +5,7 @@
 This project is a fork of [Mihon](https://github.com/mihonapp/mihon) (the open-source manga reader for Android).
 
 - **Objective**: Adapt and backport Mihon to install and run reliably on **Android 7.0 / 7.1 devices (API level 24 / 25)** specifically targeting the **`arm64-v8a`** CPU architecture.
+- **Maintainer**: Community Contributor (Runtime Obfuscated)
 - **Upstream Baseline**: Official Mihon requires Android 8.0+ (API 26+).
 - **Version Identifier**: `24.0` (indicates API 24 minimum SDK target).
 - **Current Status**: The generated APK installs and runs cleanly on Android 7.0+ devices.
@@ -50,6 +51,11 @@ This project is a fork of [Mihon](https://github.com/mihonapp/mihon) (the open-s
 - **R8 Full Mode & Obfuscation**: Enabled `android.enableR8.fullMode=true` in `gradle.properties` and removed `-dontobfuscate` in `proguard-rules.pro` (while protecting extension APIs via `source-api/consumer-proguard.pro`), shrinking DEX symbol tables by ~2.5MB.
 - **Metadata Exclusion**: Excluded `DebugProbesKt.bin`, `**/*.proto`, and `META-INF/*.kotlin_module` in `packaging.resources.excludes`.
 - **Net Result**: APK size is reduced from ~32MB down to ~13MB-15MB (over 50% size reduction) without altering any application logic.
+
+### 2.6 UI & About Screen Attribution
+- **About Screen Credit**: Added dedicated adaptation attribution in `AboutScreen.kt` located directly beneath the app Version item.
+  - **Localized Content**: Included `about_android7_backport_title` and `about_android7_backport_summary` across `base/strings.xml`, `zh-rCN/strings.xml`, and `zh-rTW/strings.xml`.
+  - **Credits**: Prominently notes that the release is based on the original Mihon project, backported for Android 7.0+ (API 24, arm64) devices, and maintained as a community backport (author string decoded at runtime to protect privacy from public code crawlers).
 
 ---
 

@@ -700,6 +700,8 @@
       <!-- About section -->
     <string name="website">Website</string>
     <string name="version">Version</string>
+    <string name="about_android7_backport_title">Android 7.0 Backport</string>
+    <string name="about_android7_backport_summary">Based on original Mihon project, ported for Android 7.0+ (API 24, arm64) devices.\nMaintained by: %s</string>
     <string name="whats_new">What\'s new</string>
     <string name="help_translate">Help translate</string>
     <string name="licenses">Open source licenses</string>

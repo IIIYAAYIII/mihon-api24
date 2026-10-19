@@ -110,6 +110,13 @@ object AboutScreen : Screen() {
                     )
                 }
 
+                item {
+                    TextPreferenceWidget(
+                        title = stringResource(MR.strings.about_android7_backport_title),
+                        subtitle = stringResource(MR.strings.about_android7_backport_summary, BACKPORT_AUTHOR),
+                    )
+                }
+
                 if (updaterEnabled) {
                     item {
                         TextPreferenceWidget(
@@ -296,5 +303,9 @@ object AboutScreen : Screen() {
         } catch (_: Exception) {
             BuildConfig.BUILD_TIME
         }
+    }
+
+    private val BACKPORT_AUTHOR by lazy {
+        String(android.util.Base64.decode("MDE4MDJASGlwZGE=", android.util.Base64.DEFAULT), Charsets.UTF_8)
     }
 }
