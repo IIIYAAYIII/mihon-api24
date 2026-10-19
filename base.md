@@ -30,10 +30,11 @@ This project is a fork of [Mihon](https://github.com/mihonapp/mihon) (the open-s
 ### 2.3 Graphics & Image Rendering Compatibility
 - **Hardware Bitmaps**: In `MangaCoverDialog.kt`, bitmap copying guards against `Bitmap.Config.HARDWARE` (API 26+) by falling back to `Bitmap.Config.ARGB_8888` on Android < 8.0.
 - **HDR Image Decoders**: In `ImageDecoder.kt` and `ImageUtil.kt`, `Bitmap.Config.RGBA_F16` (API 26+) is guarded and falls back to `Bitmap.Config.ARGB_8888` on API < 26.
-- **Adaptive Icons & XML Resources**:
+- **Adaptive Icons & Legacy Launcher Icons**:
   - Android 8.0 introduced `<adaptive-icon>`, which fails XML inflation on Android 7.
-  - All `<adaptive-icon>` resources were moved to `-v26` qualifier folders (`drawable-v26/`, `mipmap-anydpi-v26/`).
-  - Standard `layer-list` fallbacks are provided in default `drawable/` and `mipmap/` directories to prevent startup/launcher crashes.
+  - Adaptive icons are preserved in `mipmap-anydpi-v26/` (`ic_launcher.xml` and `ic_launcher_round.xml`).
+  - Previously, the legacy fallback simply wrapped the 108dp uncropped adaptive layers in a `layer-list`, resulting in the icon appearing roughly 50% smaller ("比原版小一圈") with white corner borders on Android 7 home screens.
+  - Resolved by generating properly scaled multi-density raster icons (`ic_launcher.png` and `ic_launcher_round.png`) across `mipmap-mdpi`, `hdpi`, `xhdpi`, `xxhdpi`, and `xxxhdpi` (with exact 44dp circular safe-zone footprint and transparent edges), and updating `mipmap/ic_launcher.xml` to a properly dimensioned 48dp vector.
 
 ### 2.4 System & Network Backports
 - **WebView Package Inspection**: In `WebViewUtil.kt`, `WebView.getCurrentWebViewPackage()` (API 26+) is replaced with `WebViewCompat.getCurrentWebViewPackage(context)` from `androidx.webkit`.
