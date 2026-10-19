@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.data.notification
 
 import android.content.Context
+import android.os.Build
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.NotificationManagerCompat.IMPORTANCE_DEFAULT
 import androidx.core.app.NotificationManagerCompat.IMPORTANCE_HIGH
@@ -93,6 +94,8 @@ object Notifications {
      * @param context The application context.
      */
     fun createChannels(context: Context) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+
         val notificationManager = NotificationManagerCompat.from(context)
 
         // Delete old notification channels

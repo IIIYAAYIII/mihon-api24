@@ -8,6 +8,7 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import androidx.webkit.UserAgentMetadata
 import androidx.webkit.WebSettingsCompat
+import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
 import kotlinx.coroutines.suspendCancellableCoroutine
 import logcat.LogPriority
@@ -41,7 +42,7 @@ object WebViewUtil {
     }
 
     fun getVersion(context: Context): String {
-        val webView = WebView.getCurrentWebViewPackage() ?: return "how did you get here?"
+        val webView = WebViewCompat.getCurrentWebViewPackage(context) ?: return "how did you get here?"
         val pm = context.packageManager
         val label = webView.applicationInfo!!.loadLabel(pm)
         val version = webView.versionName

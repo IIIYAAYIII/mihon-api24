@@ -2,6 +2,7 @@ package eu.kanade.presentation.manga.components
 
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
+import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -248,7 +249,13 @@ fun MangaCoverDialog(
                                 // Because SSIV needs to thoroughly read the image
                                 val copy = (drawable as? BitmapDrawable)
                                     ?.bitmap
-                                    ?.copy(Bitmap.Config.HARDWARE, false)
+                                    ?.let {
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                            it.copy(Bitmap.Config.HARDWARE, false)
+                                        } else {
+                                            it.copy(Bitmap.Config.ARGB_8888, false)
+                                        }
+                                    }
                                     ?.toDrawable(view.context.resources)
                                     ?: drawable
                                 view.setImage(copy, ReaderPageImageView.Config(zoomDuration = 500))

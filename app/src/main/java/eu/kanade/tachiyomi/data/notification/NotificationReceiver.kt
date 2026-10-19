@@ -332,12 +332,17 @@ class NotificationReceiver : BroadcastReceiver() {
 
             When programmatically dismissing this notification, the group notification is not automatically dismissed.
              */
-            val groupKey = context.notificationManager.activeNotifications.find {
+            val activeNotifs = try {
+                context.notificationManager.activeNotifications ?: emptyArray()
+            } catch (_: Throwable) {
+                emptyArray()
+            }
+            val groupKey = activeNotifs.find {
                 it.id == notificationId
             }?.groupKey
 
             if (groupId != null && groupId != 0 && !groupKey.isNullOrEmpty()) {
-                val notifications = context.notificationManager.activeNotifications.filter {
+                val notifications = activeNotifs.filter {
                     it.groupKey == groupKey
                 }
 
