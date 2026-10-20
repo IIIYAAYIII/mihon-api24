@@ -55,9 +55,7 @@ abstract class CompileTimeCompatDexTask : DefaultTask() {
             mkdirs()
         }
 
-        val javaFiles = project.fileTree(srcDir) {
-            include("**/*.java")
-        }.files
+        val javaFiles = srcDir.walkTopDown().filter { it.isFile && it.extension == "java" }.toList()
 
         if (javaFiles.isEmpty()) return
 
@@ -67,21 +65,26 @@ abstract class CompileTimeCompatDexTask : DefaultTask() {
         if (compiler != null) {
             val diagnostics = DiagnosticCollector<JavaFileObject>()
             val fileManager = compiler.getStandardFileManager(diagnostics, null, null)
-            val compilationUnits = fileManager.getJavaFileObjectsFromFiles(javaFiles)
-            val options = listOf(
-                "--patch-module", "java.base=${srcDir.absolutePath}",
-                "-cp", cp,
-                "-d", tempClasses.absolutePath,
-            )
-            val success = compiler.getTask(null, fileManager, diagnostics, options, null, compilationUnits).call()
-            if (!success) {
-                val errors = diagnostics.diagnostics.joinToString("\n") {
-                    "${it.kind}: ${it.getMessage(null)} (${it.source?.name}:${it.lineNumber})"
+            try {
+                val compilationUnits = fileManager.getJavaFileObjectsFromFiles(javaFiles)
+                val options = listOf(
+                    "--patch-module", "java.base=${srcDir.absolutePath}",
+                    "-cp", cp,
+                    "-d", tempClasses.absolutePath,
+                )
+                val success = compiler.getTask(null, fileManager, diagnostics, options, null, compilationUnits).call()
+                if (!success) {
+                    val errors = diagnostics.diagnostics.joinToString("\n") {
+                        "${it.kind}: ${it.getMessage(null)} (${it.source?.name}:${it.lineNumber})"
+                    }
+                    throw GradleException("Failed to compile timeCompat Java classes:\n$errors")
                 }
-                throw GradleException("Failed to compile timeCompat Java classes:\n$errors")
+            } finally {
+                fileManager.close()
             }
         } else {
             execOperations.exec {
+                standardInput = java.io.InputStream.nullInputStream()
                 commandLine(
                     "javac",
                     "--patch-module", "java.base=${srcDir.absolutePath}",
@@ -92,9 +95,10 @@ abstract class CompileTimeCompatDexTask : DefaultTask() {
             }
         }
 
-        val classFiles = project.fileTree(tempClasses) {
-            include("**/*.class")
-        }.files.map { it.absolutePath }
+        val classFiles = tempClasses.walkTopDown().filter { it.isFile && it.extension == "class" }.toList()
+        if (classFiles.isEmpty()) {
+            throw GradleException("No class files produced for timeCompat")
+        }
 
         val buildToolsParent = File(sdkDirectory.get().asFile, "build-tools")
         val requestedVersion = buildToolsVersion.orNull
@@ -105,29 +109,28 @@ abstract class CompileTimeCompatDexTask : DefaultTask() {
                 ?: File(buildToolsParent, requestedVersion ?: "35.0.0")
         }
 
-        val isWindows = System.getProperty("os.name").lowercase().contains("windows")
-        val d8Exe = File(buildToolsDir, if (isWindows) "d8.bat" else "d8")
+        val d8Jar = File(buildToolsDir, "lib/d8.jar").takeIf { it.exists() }
+            ?: File(buildToolsDir, "d8.jar").takeIf { it.exists() }
+            ?: throw GradleException("Could not find d8.jar in ${buildToolsDir.absolutePath}")
 
-        if (d8Exe.exists()) {
-            execOperations.exec {
-                commandLine(
-                    d8Exe.absolutePath,
-                    "--min-api", "24",
-                    "--output", tempDex.absolutePath,
-                    *classFiles.toTypedArray(),
-                )
-            }
-        } else {
-            val d8Jar = File(buildToolsDir, "lib/d8.jar")
-            if (!d8Jar.exists()) {
-                throw GradleException("Could not find d8 executable or d8.jar in ${buildToolsDir.absolutePath}")
-            }
-            execOperations.javaexec {
-                mainClass.set("com.android.tools.r8.D8")
-                classpath(d8Jar)
-                args("--min-api", "24", "--output", tempDex.absolutePath)
-                args(classFiles)
-            }
+        val d8Args = mutableListOf(
+            "--min-api", "24",
+            "--output", tempDex.absolutePath,
+        )
+        for (f in bootClasspath.files) {
+            d8Args.add("--lib")
+            d8Args.add(f.absolutePath)
+        }
+        for (f in compileClasspath.files) {
+            d8Args.add("--classpath")
+            d8Args.add(f.absolutePath)
+        }
+        d8Args.addAll(classFiles.map { it.absolutePath })
+
+        execOperations.javaexec {
+            mainClass.set("com.android.tools.r8.D8")
+            classpath(d8Jar)
+            args(d8Args)
         }
 
         val generatedDex = File(tempDex, "classes.dex")
