@@ -69,6 +69,7 @@ abstract class CompileTimeCompatDexTask : DefaultTask() {
                 val compilationUnits = fileManager.getJavaFileObjectsFromFiles(javaFiles)
                 val options = listOf(
                     "--patch-module", "java.base=${srcDir.absolutePath}",
+                    "--add-reads", "java.base=ALL-UNNAMED",
                     "-cp", cp,
                     "-d", tempClasses.absolutePath,
                 )
@@ -88,6 +89,7 @@ abstract class CompileTimeCompatDexTask : DefaultTask() {
                 commandLine(
                     "javac",
                     "--patch-module", "java.base=${srcDir.absolutePath}",
+                    "--add-reads", "java.base=ALL-UNNAMED",
                     "-cp", cp,
                     "-d", tempClasses.absolutePath,
                     *javaFiles.map { it.absolutePath }.toTypedArray(),
