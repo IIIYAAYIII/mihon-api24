@@ -96,7 +96,15 @@ abstract class CompileTimeCompatDexTask : DefaultTask() {
             include("**/*.class")
         }.files.map { it.absolutePath }
 
-        val buildToolsDir = File(sdkDirectory.get().asFile, "build-tools/${buildToolsVersion.get()}")
+        val buildToolsParent = File(sdkDirectory.get().asFile, "build-tools")
+        val requestedVersion = buildToolsVersion.orNull
+        val buildToolsDir = if (!requestedVersion.isNullOrBlank() && File(buildToolsParent, requestedVersion).exists()) {
+            File(buildToolsParent, requestedVersion)
+        } else {
+            buildToolsParent.listFiles()?.filter { it.isDirectory }?.maxByOrNull { it.name }
+                ?: File(buildToolsParent, requestedVersion ?: "35.0.0")
+        }
+
         val isWindows = System.getProperty("os.name").lowercase().contains("windows")
         val d8Exe = File(buildToolsDir, if (isWindows) "d8.bat" else "d8")
 
@@ -110,9 +118,13 @@ abstract class CompileTimeCompatDexTask : DefaultTask() {
                 )
             }
         } else {
+            val d8Jar = File(buildToolsDir, "lib/d8.jar")
+            if (!d8Jar.exists()) {
+                throw GradleException("Could not find d8 executable or d8.jar in ${buildToolsDir.absolutePath}")
+            }
             execOperations.javaexec {
                 mainClass.set("com.android.tools.r8.D8")
-                classpath(File(buildToolsDir, "lib/d8.jar"))
+                classpath(d8Jar)
                 args("--min-api", "24", "--output", tempDex.absolutePath)
                 args(classFiles)
             }

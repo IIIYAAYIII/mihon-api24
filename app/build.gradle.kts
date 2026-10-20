@@ -44,9 +44,11 @@ android {
         buildConfigField("boolean", "TELEMETRY_INCLUDED", "${Config.includeTelemetry}")
         buildConfigField("boolean", "UPDATER_ENABLED", "${Config.enableUpdater}")
 
-        resourceConfigurations += listOf("en", "zh", "zh-rCN", "zh-rTW", "zh-rHK")
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    androidResources {
+        localeFilters += listOf("en", "zh", "zh-rCN", "zh-rTW", "zh-rHK")
     }
 
     if (System.getenv("MIHON_GITHUB_RELEASE").toBoolean()) {
@@ -444,14 +446,16 @@ androidComponents {
         resSource.addGeneratedSourceDirectory(replaceShortcutsPlaceholderTask) { it.outputDir }
 
         variant.sources.assets?.let { assetsSource ->
+            val sdkBootClasspath = sdkComponents.bootClasspath
+            val androidSdkDir = sdkComponents.sdkDirectory
             val compileTimeCompatDexTask = tasks.register<CompileTimeCompatDexTask>(
                 "compile${variantName}TimeCompatDex",
             ) {
-                sourceDir.set(projectDir.resolve("src/timeCompat/java"))
+                sourceDir.set(layout.projectDirectory.dir("src/timeCompat/java"))
                 compileClasspath.from(configurations.getByName("coreLibraryDesugaring"))
-                bootClasspath.from(android.bootClasspath)
+                bootClasspath.from(sdkBootClasspath)
                 buildToolsVersion.set(android.buildToolsVersion)
-                sdkDirectory.set(android.sdkDirectory)
+                sdkDirectory.set(androidSdkDir)
             }
             assetsSource.addGeneratedSourceDirectory(compileTimeCompatDexTask) { it.outputDir }
         }
