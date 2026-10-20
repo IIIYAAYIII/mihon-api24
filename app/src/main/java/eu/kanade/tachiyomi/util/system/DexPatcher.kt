@@ -24,6 +24,7 @@ object DexPatcher {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) return
         try {
             val prefs = context.getSharedPreferences("dex_patcher_state", Context.MODE_PRIVATE)
+
             @Suppress("DEPRECATION")
             val currentVersionCode = try {
                 context.packageManager.getPackageInfo(context.packageName, 0).versionCode
@@ -32,7 +33,9 @@ object DexPatcher {
             }
             val lastVersionCode = prefs.getInt("last_version_code", -1)
             if (lastVersionCode != currentVersionCode) {
-                logcat(LogPriority.INFO) { "App updated (code $lastVersionCode -> $currentVersionCode), clearing extension DEX caches" }
+                logcat(LogPriority.INFO) {
+                    "App updated (code $lastVersionCode -> $currentVersionCode), clearing extension DEX caches"
+                }
                 File(context.codeCacheDir, PATCHED_DIR_NAME).deleteRecursively()
                 File(context.codeCacheDir, "ext_opt").deleteRecursively()
                 File(context.codeCacheDir, "time_compat.dex").delete()

@@ -4,7 +4,6 @@ import android.content.ContentResolver
 import android.content.Context
 import android.os.Build
 import com.hippo.unifile.UniFile
-import java.io.File
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
@@ -25,6 +24,7 @@ import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.domain.manga.model.Manga
 import tachiyomi.domain.storage.service.StorageManager
 import tachiyomi.i18n.MR
+import java.io.File
 import java.io.IOException
 
 /**

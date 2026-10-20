@@ -78,7 +78,9 @@ internal object ExtensionLoader {
                 check(!isCurrentShared) {
                     "It isn't signed with the same key as the installed extension"
                 }
-                logcat(LogPriority.INFO) { "Replacing private extension ${extension.packageName} with new signing key from store" }
+                logcat(LogPriority.INFO) {
+                    "Replacing private extension ${extension.packageName} with new signing key from store"
+                }
             }
 
             val currentVersionCode = PackageInfoCompat.getLongVersionCode(currentExtension)
