@@ -456,6 +456,7 @@ androidComponents {
                 "compile${variantName}TimeCompatDex",
             ) {
                 sourceDir.set(layout.projectDirectory.dir("src/timeCompat/java"))
+                stubsDir.set(layout.projectDirectory.dir("src/timeCompatStubs/java"))
                 compileClasspath.from(desugarClasspath)
                 bootClasspath.from(sdkBootClasspath)
                 buildToolsVersion.set(android.buildToolsVersion)

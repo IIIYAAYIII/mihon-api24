@@ -8,6 +8,7 @@ import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 import org.gradle.process.ExecOperations
@@ -24,6 +25,10 @@ abstract class CompileTimeCompatDexTask : DefaultTask() {
 
     @get:InputDirectory
     abstract val sourceDir: DirectoryProperty
+
+    @get:InputDirectory
+    @get:Optional
+    abstract val stubsDir: DirectoryProperty
 
     @get:InputFiles
     abstract val compileClasspath: ConfigurableFileCollection
@@ -46,6 +51,10 @@ abstract class CompileTimeCompatDexTask : DefaultTask() {
         val outDir = outputDir.get().asFile
         outDir.mkdirs()
 
+        val tempStubsClasses = File(temporaryDir, "stubsClasses").apply {
+            deleteRecursively()
+            mkdirs()
+        }
         val tempClasses = File(temporaryDir, "classes").apply {
             deleteRecursively()
             mkdirs()
@@ -55,58 +64,66 @@ abstract class CompileTimeCompatDexTask : DefaultTask() {
             mkdirs()
         }
 
+        val stubsJavaFiles = stubsDir.orNull?.asFile?.walkTopDown()?.filter { it.isFile && it.extension == "java" }?.toList() ?: emptyList()
         val javaFiles = srcDir.walkTopDown().filter { it.isFile && it.extension == "java" }.toList()
 
         if (javaFiles.isEmpty()) return
 
-        if (compileClasspath.files.isEmpty()) {
-            throw GradleException("compileClasspath for timeCompat is empty! Desugared library was not resolved.")
-        }
-
-        val cp = (compileClasspath.files + bootClasspath.files).joinToString(File.pathSeparator) { it.absolutePath }
-
         val compiler = ToolProvider.getSystemJavaCompiler()
-        if (compiler != null) {
+            ?: throw GradleException("System Java compiler not available for compiling timeCompat")
+
+        if (stubsJavaFiles.isNotEmpty()) {
             val diagnostics = DiagnosticCollector<JavaFileObject>()
             val fileManager = compiler.getStandardFileManager(diagnostics, null, null)
             try {
-                val compilationUnits = fileManager.getJavaFileObjectsFromFiles(javaFiles)
+                val compilationUnits = fileManager.getJavaFileObjectsFromFiles(stubsJavaFiles)
                 val options = listOf(
-                    "--patch-module",
-                    "java.base=${srcDir.absolutePath}",
-                    "--add-reads",
-                    "java.base=ALL-UNNAMED",
-                    "-cp",
-                    cp,
                     "-d",
-                    tempClasses.absolutePath,
+                    tempStubsClasses.absolutePath,
                 )
                 val success = compiler.getTask(null, fileManager, diagnostics, options, null, compilationUnits).call()
                 if (!success) {
                     val errors = diagnostics.diagnostics.joinToString("\n") {
                         "${it.kind}: ${it.getMessage(null)} (${it.source?.name}:${it.lineNumber})"
                     }
-                    throw GradleException("Failed to compile timeCompat Java classes:\n$errors")
+                    throw GradleException("Failed to compile timeCompat stubs:\n$errors")
                 }
             } finally {
                 fileManager.close()
             }
-        } else {
-            execOperations.exec {
-                standardInput = java.io.InputStream.nullInputStream()
-                commandLine(
-                    "javac",
-                    "--patch-module",
-                    "java.base=${srcDir.absolutePath}",
-                    "--add-reads",
-                    "java.base=ALL-UNNAMED",
-                    "-cp",
-                    cp,
-                    "-d",
-                    tempClasses.absolutePath,
-                    *javaFiles.map { it.absolutePath }.toTypedArray(),
-                )
+        }
+
+        val cpFiles = mutableListOf<File>()
+        if (stubsJavaFiles.isNotEmpty()) {
+            cpFiles.add(tempStubsClasses)
+        }
+        cpFiles.addAll(compileClasspath.files)
+        cpFiles.addAll(bootClasspath.files)
+        val cp = cpFiles.joinToString(File.pathSeparator) { it.absolutePath }
+
+        val diagnostics = DiagnosticCollector<JavaFileObject>()
+        val fileManager = compiler.getStandardFileManager(diagnostics, null, null)
+        try {
+            val compilationUnits = fileManager.getJavaFileObjectsFromFiles(javaFiles)
+            val options = listOf(
+                "--patch-module",
+                "java.base=${srcDir.absolutePath}",
+                "--add-reads",
+                "java.base=ALL-UNNAMED",
+                "-cp",
+                cp,
+                "-d",
+                tempClasses.absolutePath,
+            )
+            val success = compiler.getTask(null, fileManager, diagnostics, options, null, compilationUnits).call()
+            if (!success) {
+                val errors = diagnostics.diagnostics.joinToString("\n") {
+                    "${it.kind}: ${it.getMessage(null)} (${it.source?.name}:${it.lineNumber})"
+                }
+                throw GradleException("Failed to compile timeCompat Java classes:\n$errors")
             }
+        } finally {
+            fileManager.close()
         }
 
         val classFiles = tempClasses.walkTopDown().filter { it.isFile && it.extension == "class" }.toList()
@@ -138,6 +155,10 @@ abstract class CompileTimeCompatDexTask : DefaultTask() {
         for (f in bootClasspath.files) {
             d8Args.add("--lib")
             d8Args.add(f.absolutePath)
+        }
+        if (stubsJavaFiles.isNotEmpty()) {
+            d8Args.add("--classpath")
+            d8Args.add(tempStubsClasses.absolutePath)
         }
         for (f in compileClasspath.files) {
             d8Args.add("--classpath")
