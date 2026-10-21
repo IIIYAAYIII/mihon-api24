@@ -68,10 +68,14 @@ abstract class CompileTimeCompatDexTask : DefaultTask() {
             try {
                 val compilationUnits = fileManager.getJavaFileObjectsFromFiles(javaFiles)
                 val options = listOf(
-                    "--patch-module", "java.base=${srcDir.absolutePath}",
-                    "--add-reads", "java.base=ALL-UNNAMED",
-                    "-cp", cp,
-                    "-d", tempClasses.absolutePath,
+                    "--patch-module",
+                    "java.base=${srcDir.absolutePath}",
+                    "--add-reads",
+                    "java.base=ALL-UNNAMED",
+                    "-cp",
+                    cp,
+                    "-d",
+                    tempClasses.absolutePath,
                 )
                 val success = compiler.getTask(null, fileManager, diagnostics, options, null, compilationUnits).call()
                 if (!success) {
@@ -88,10 +92,14 @@ abstract class CompileTimeCompatDexTask : DefaultTask() {
                 standardInput = java.io.InputStream.nullInputStream()
                 commandLine(
                     "javac",
-                    "--patch-module", "java.base=${srcDir.absolutePath}",
-                    "--add-reads", "java.base=ALL-UNNAMED",
-                    "-cp", cp,
-                    "-d", tempClasses.absolutePath,
+                    "--patch-module",
+                    "java.base=${srcDir.absolutePath}",
+                    "--add-reads",
+                    "java.base=ALL-UNNAMED",
+                    "-cp",
+                    cp,
+                    "-d",
+                    tempClasses.absolutePath,
                     *javaFiles.map { it.absolutePath }.toTypedArray(),
                 )
             }
@@ -104,7 +112,9 @@ abstract class CompileTimeCompatDexTask : DefaultTask() {
 
         val buildToolsParent = File(sdkDirectory.get().asFile, "build-tools")
         val requestedVersion = buildToolsVersion.orNull
-        val buildToolsDir = if (!requestedVersion.isNullOrBlank() && File(buildToolsParent, requestedVersion).exists()) {
+        val buildToolsDir = if (!requestedVersion.isNullOrBlank() &&
+            File(buildToolsParent, requestedVersion).exists()
+        ) {
             File(buildToolsParent, requestedVersion)
         } else {
             buildToolsParent.listFiles()?.filter { it.isDirectory }?.maxByOrNull { it.name }
@@ -116,8 +126,10 @@ abstract class CompileTimeCompatDexTask : DefaultTask() {
             ?: throw GradleException("Could not find d8.jar in ${buildToolsDir.absolutePath}")
 
         val d8Args = mutableListOf(
-            "--min-api", "24",
-            "--output", tempDex.absolutePath,
+            "--min-api",
+            "24",
+            "--output",
+            tempDex.absolutePath,
         )
         for (f in bootClasspath.files) {
             d8Args.add("--lib")
