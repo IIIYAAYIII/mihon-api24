@@ -9,7 +9,7 @@ on:
 
 jobs:
   update_website:
-    if: github.repository == 'mihonapp/mihon' && secrets.MIHON_BOT_TOKEN != ''
+    if: github.repository == 'mihonapp/mihon'
     runs-on: 'ubuntu-26.04'
 
     steps:
