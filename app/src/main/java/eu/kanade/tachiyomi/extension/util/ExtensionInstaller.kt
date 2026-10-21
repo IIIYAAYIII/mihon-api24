@@ -176,7 +176,7 @@ class ExtensionInstaller(
             updateInstallStep(downloadId, InstallStep.Installed)
         } catch (e: Exception) {
             logcat(LogPriority.ERROR, e) { "Failed to install extension privately: ${packageInfo.packageName}" }
-            withContext(Dispatchers.Main) {
+            scope.launch(Dispatchers.Main) {
                 context.toast("${packageInfo.packageName} 私有安装失败: ${e.message}")
             }
             updateInstallStep(downloadId, InstallStep.Error)
