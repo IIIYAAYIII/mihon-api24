@@ -31,7 +31,11 @@ public final class Duration implements Comparable<Duration> {
         if (startInclusive instanceof Instant && endExclusive instanceof Instant) {
             return wrap(j$.time.Duration.between(((Instant) startInclusive).unwrap(), ((Instant) endExclusive).unwrap()));
         }
-        return wrap(j$.time.Duration.ZERO);
+        try {
+            return wrap(j$.time.Duration.ZERO);
+        } catch (Throwable t) {
+            return ofSeconds(0);
+        }
     }
 
     public long toMillis() {

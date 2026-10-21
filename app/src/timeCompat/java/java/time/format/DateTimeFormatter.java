@@ -18,13 +18,69 @@ public final class DateTimeFormatter {
         return wrap(j$.time.format.DateTimeFormatter.ofPattern(pattern, locale));
     }
 
-    public static final DateTimeFormatter ISO_LOCAL_DATE = wrap(j$.time.format.DateTimeFormatter.ISO_LOCAL_DATE);
-    public static final DateTimeFormatter ISO_LOCAL_TIME = wrap(j$.time.format.DateTimeFormatter.ISO_LOCAL_TIME);
-    public static final DateTimeFormatter ISO_LOCAL_DATE_TIME = wrap(j$.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME);
-    public static final DateTimeFormatter ISO_ZONED_DATE_TIME = wrap(j$.time.format.DateTimeFormatter.ISO_ZONED_DATE_TIME);
-    public static final DateTimeFormatter ISO_DATE_TIME = wrap(j$.time.format.DateTimeFormatter.ISO_DATE_TIME);
-    public static final DateTimeFormatter ISO_INSTANT = wrap(j$.time.format.DateTimeFormatter.ISO_INSTANT);
-    public static final DateTimeFormatter BASIC_ISO_DATE = wrap(j$.time.format.DateTimeFormatter.BASIC_ISO_DATE);
+    public static final DateTimeFormatter ISO_LOCAL_DATE = initIsoLocalDate();
+    public static final DateTimeFormatter ISO_LOCAL_TIME = initIsoLocalTime();
+    public static final DateTimeFormatter ISO_LOCAL_DATE_TIME = initIsoLocalDateTime();
+    public static final DateTimeFormatter ISO_ZONED_DATE_TIME = initIsoZonedDateTime();
+    public static final DateTimeFormatter ISO_DATE_TIME = initIsoDateTime();
+    public static final DateTimeFormatter ISO_INSTANT = initIsoInstant();
+    public static final DateTimeFormatter BASIC_ISO_DATE = initBasicIsoDate();
+
+    private static DateTimeFormatter initIsoLocalDate() {
+        try {
+            return wrap(j$.time.format.DateTimeFormatter.ISO_LOCAL_DATE);
+        } catch (Throwable t) {
+            return ofPattern("yyyy-MM-dd");
+        }
+    }
+
+    private static DateTimeFormatter initIsoLocalTime() {
+        try {
+            return wrap(j$.time.format.DateTimeFormatter.ISO_LOCAL_TIME);
+        } catch (Throwable t) {
+            return ofPattern("HH:mm:ss");
+        }
+    }
+
+    private static DateTimeFormatter initIsoLocalDateTime() {
+        try {
+            return wrap(j$.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        } catch (Throwable t) {
+            return ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+        }
+    }
+
+    private static DateTimeFormatter initIsoZonedDateTime() {
+        try {
+            return wrap(j$.time.format.DateTimeFormatter.ISO_ZONED_DATE_TIME);
+        } catch (Throwable t) {
+            return ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX");
+        }
+    }
+
+    private static DateTimeFormatter initIsoDateTime() {
+        try {
+            return wrap(j$.time.format.DateTimeFormatter.ISO_DATE_TIME);
+        } catch (Throwable t) {
+            return ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+        }
+    }
+
+    private static DateTimeFormatter initIsoInstant() {
+        try {
+            return wrap(j$.time.format.DateTimeFormatter.ISO_INSTANT);
+        } catch (Throwable t) {
+            return new DateTimeFormatterBuilder().appendInstant().toFormatter();
+        }
+    }
+
+    private static DateTimeFormatter initBasicIsoDate() {
+        try {
+            return wrap(j$.time.format.DateTimeFormatter.BASIC_ISO_DATE);
+        } catch (Throwable t) {
+            return ofPattern("yyyyMMdd");
+        }
+    }
 
     public ZoneId getZone() {
         return ZoneId.wrap(delegate != null ? delegate.getZone() : null);

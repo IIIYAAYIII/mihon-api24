@@ -30,6 +30,8 @@
 -keep,allowoptimization class app.cash.quickjs.** { public protected *; }
 -keep,allowoptimization class uy.kohesive.injekt.** { public protected *; }
 -keep,allowoptimization class com.squareup.zstd.** { public protected *; }
+-keep class j$.** { *; }
+-keep interface j$.** { *; }
 
 -keepclassmembers class * implements java.io.Serializable {
     java.lang.Object writeReplace();

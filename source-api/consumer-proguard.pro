@@ -7,3 +7,6 @@
 -keep class eu.kanade.tachiyomi.network.** { *; }
 -keepclassmembers class eu.kanade.tachiyomi.network.** { *; }
 -keep class eu.kanade.tachiyomi.util.JsoupExtensionsKt { *; }
+-keep class j$.** { *; }
+-keep interface j$.** { *; }
+

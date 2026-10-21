@@ -64,7 +64,9 @@ abstract class CompileTimeCompatDexTask : DefaultTask() {
             mkdirs()
         }
 
-        val stubsJavaFiles = stubsDir.orNull?.asFile?.walkTopDown()?.filter { it.isFile && it.extension == "java" }?.toList() ?: emptyList()
+        val stubsJavaFiles =
+            stubsDir.orNull?.asFile?.walkTopDown()?.filter { it.isFile && it.extension == "java" }?.toList()
+                ?: emptyList()
         val javaFiles = srcDir.walkTopDown().filter { it.isFile && it.extension == "java" }.toList()
 
         if (javaFiles.isEmpty()) return
