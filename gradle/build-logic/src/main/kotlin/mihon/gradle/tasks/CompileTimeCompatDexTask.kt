@@ -59,6 +59,10 @@ abstract class CompileTimeCompatDexTask : DefaultTask() {
 
         if (javaFiles.isEmpty()) return
 
+        if (compileClasspath.files.isEmpty()) {
+            throw GradleException("compileClasspath for timeCompat is empty! Desugared library was not resolved.")
+        }
+
         val cp = (compileClasspath.files + bootClasspath.files).joinToString(File.pathSeparator) { it.absolutePath }
 
         val compiler = ToolProvider.getSystemJavaCompiler()

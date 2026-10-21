@@ -416,6 +416,10 @@ fun ApplicationVariant.buildConfigField(type: String, name: String, value: Provi
     buildConfigFields?.put(name, value.map { BuildConfigField(type, it, null) })
 }
 
+val desugarClasspath = configurations.detachedConfiguration(
+    dependencies.create(libs.android.desugar.get()),
+)
+
 androidComponents {
     onVariants { variant ->
         val isUnstableBuild = variant.buildType == "debug" || variant.buildType == "nightly"
@@ -452,7 +456,7 @@ androidComponents {
                 "compile${variantName}TimeCompatDex",
             ) {
                 sourceDir.set(layout.projectDirectory.dir("src/timeCompat/java"))
-                compileClasspath.from(configurations.getByName("coreLibraryDesugaring"))
+                compileClasspath.from(desugarClasspath)
                 bootClasspath.from(sdkBootClasspath)
                 buildToolsVersion.set(android.buildToolsVersion)
                 sdkDirectory.set(androidSdkDir)
