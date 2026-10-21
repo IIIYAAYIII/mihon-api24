@@ -14,6 +14,16 @@ public final class DateTimeFormatterBuilder {
         return this;
     }
 
+    public DateTimeFormatterBuilder appendInstant() {
+        delegate.appendInstant();
+        return this;
+    }
+
+    public DateTimeFormatterBuilder appendInstant(int fractionalDigits) {
+        delegate.appendInstant(fractionalDigits);
+        return this;
+    }
+
     public DateTimeFormatterBuilder appendLiteral(String literal) {
         delegate.appendLiteral(literal);
         return this;

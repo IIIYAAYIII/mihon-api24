@@ -70,7 +70,11 @@ public final class DateTimeFormatter {
         try {
             return wrap(j$.time.format.DateTimeFormatter.ISO_INSTANT);
         } catch (Throwable t) {
-            return new DateTimeFormatterBuilder().appendInstant().toFormatter();
+            try {
+                return new DateTimeFormatterBuilder().appendInstant().toFormatter();
+            } catch (Throwable t2) {
+                return ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+            }
         }
     }
 

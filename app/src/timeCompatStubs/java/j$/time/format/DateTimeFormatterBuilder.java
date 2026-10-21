@@ -9,6 +9,14 @@ public final class DateTimeFormatterBuilder {
         return this;
     }
 
+    public DateTimeFormatterBuilder appendInstant() {
+        return this;
+    }
+
+    public DateTimeFormatterBuilder appendInstant(int fractionalDigits) {
+        return this;
+    }
+
     public DateTimeFormatterBuilder appendLiteral(String literal) {
         return this;
     }
