@@ -38,4 +38,3 @@ fun Context.isOnline(): Boolean {
 fun Context.isConnectedToWifi(): Boolean {
     return activeNetworkState().isWifi
 }
-

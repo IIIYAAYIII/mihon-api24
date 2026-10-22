@@ -52,10 +52,10 @@ fun Context.activeNetworkState(): NetworkState {
         ) {
             cm.allNetworks.any { net ->
                 val caps = cm.getNetworkCapabilities(net)
-                caps != null && (
-                    caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
-                        caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
-                )
+                caps?.let {
+                    it.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+                        it.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
+                } == true
             }
         } else {
             false
@@ -97,4 +97,3 @@ fun Context.networkStateFlow() = callbackFlow {
         }
     }
 }
-
