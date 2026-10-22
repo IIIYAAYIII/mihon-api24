@@ -1,7 +1,10 @@
 package tachiyomi.domain.storage.service
 
 import android.content.Context
+import android.net.Uri
 import android.os.Build
+import android.os.Environment
+import android.provider.DocumentsContract
 import androidx.core.net.toUri
 import com.hippo.unifile.UniFile
 import dev.zacsweers.metro.AppScope
@@ -61,6 +64,17 @@ class StorageManager(
     }
 
     private fun getBaseDir(uri: String): UniFile? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            val rawFile = resolveToFile(context, uri)
+            if (rawFile != null) {
+                if (!rawFile.exists()) {
+                    rawFile.mkdirs()
+                }
+                if (rawFile.exists() || rawFile.isDirectory) {
+                    UniFile.fromFile(rawFile)?.let { return it }
+                }
+            }
+        }
         val file = UniFile.fromUri(context, uri.toUri())
         if (file?.exists() == true) {
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
@@ -83,20 +97,45 @@ class StorageManager(
                     UniFile.fromFile(rawFile)?.let { return it }
                 }
             }
+            val fallback = File(Environment.getExternalStorageDirectory(), "Mihon")
+            if (fallback.exists() || fallback.mkdirs()) {
+                UniFile.fromFile(fallback)?.let { return it }
+            }
         }
         return file?.takeIf { it.exists() }
     }
 
     fun getAutomaticBackupsDirectory(): UniFile? {
-        return getChildDirectory(AUTOMATIC_BACKUPS_PATH)
+        val dir = getChildDirectory(AUTOMATIC_BACKUPS_PATH)
+        if (dir == null && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            val fallback = File(Environment.getExternalStorageDirectory(), "Mihon/$AUTOMATIC_BACKUPS_PATH")
+            if (fallback.exists() || fallback.mkdirs()) {
+                return UniFile.fromFile(fallback)
+            }
+        }
+        return dir
     }
 
     fun getDownloadsDirectory(): UniFile? {
-        return getChildDirectory(DOWNLOADS_PATH)
+        val dir = getChildDirectory(DOWNLOADS_PATH)
+        if (dir == null && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            val fallback = File(Environment.getExternalStorageDirectory(), "Mihon/$DOWNLOADS_PATH")
+            if (fallback.exists() || fallback.mkdirs()) {
+                return UniFile.fromFile(fallback)
+            }
+        }
+        return dir
     }
 
     fun getLocalSourceDirectory(): UniFile? {
-        return getChildDirectory(LOCAL_SOURCE_PATH)
+        val dir = getChildDirectory(LOCAL_SOURCE_PATH)
+        if (dir == null && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            val fallback = File(Environment.getExternalStorageDirectory(), "Mihon/$LOCAL_SOURCE_PATH")
+            if (fallback.exists() || fallback.mkdirs()) {
+                return UniFile.fromFile(fallback)
+            }
+        }
+        return dir
     }
 
     private fun getChildDirectory(name: String): UniFile? {
@@ -106,7 +145,8 @@ class StorageManager(
             ?.let { (_, directory) -> return directory }
         var dir = parent.createDirectory(name)
         if (dir == null && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            parent.filePath?.let { parentPath ->
+            val parentPath = parent.filePath ?: resolveToFile(context, parent.uri.toString())?.absolutePath
+            if (parentPath != null) {
                 val childFile = File(parentPath, name)
                 if (childFile.exists() || childFile.mkdirs()) {
                     dir = UniFile.fromFile(childFile)
@@ -115,7 +155,67 @@ class StorageManager(
         }
         return dir?.also { childDirectories[name] = parent to it }
     }
+
+    companion object {
+        fun resolveToFile(context: Context, uriString: String): File? {
+            if (uriString.isBlank()) return null
+            return try {
+                if (uriString.startsWith("/")) {
+                    return File(uriString)
+                }
+                val uri = uriString.toUri()
+                when (uri.scheme) {
+                    "file" -> {
+                        val path = uri.path ?: return null
+                        File(path)
+                    }
+                    "content" -> {
+                        val docId = when {
+                            DocumentsContract.isTreeUri(uri) -> DocumentsContract.getTreeDocumentId(uri)
+                            DocumentsContract.isDocumentUri(context, uri) -> DocumentsContract.getDocumentId(uri)
+                            else -> {
+                                val path = uri.path ?: ""
+                                val unquoted = Uri.decode(path)
+                                when {
+                                    unquoted.contains("/tree/") -> unquoted.substringAfterLast("/tree/")
+                                    unquoted.contains("/document/") -> unquoted.substringAfterLast("/document/")
+                                    else -> null
+                                }
+                            }
+                        } ?: return null
+
+                        val decodedDocId = Uri.decode(docId)
+                        val parts = decodedDocId.split(":", limit = 2)
+                        val storageId = parts[0]
+                        val relPath = if (parts.size > 1) parts[1] else ""
+
+                        if (storageId.equals("primary", ignoreCase = true)) {
+                            val ext = Environment.getExternalStorageDirectory()
+                            if (relPath.isNotEmpty()) File(ext, relPath) else ext
+                        } else {
+                            val file = File("/storage/$storageId" + if (relPath.isNotEmpty()) "/$relPath" else "")
+                            if (file.exists() || File("/storage/$storageId").exists()) {
+                                file
+                            } else {
+                                DiskUtil.getExternalStorages(context)
+                                    .firstOrNull {
+                                        it.name.equals(storageId, ignoreCase = true) ||
+                                            it.absolutePath.contains(storageId)
+                                    }
+                                    ?.let { root -> if (relPath.isNotEmpty()) File(root, relPath) else root }
+                                    ?: file
+                            }
+                        }
+                    }
+                    else -> null
+                }
+            } catch (_: Exception) {
+                null
+            }
+        }
+    }
 }
+
 
 private const val AUTOMATIC_BACKUPS_PATH = "autobackup"
 private const val DOWNLOADS_PATH = "downloads"

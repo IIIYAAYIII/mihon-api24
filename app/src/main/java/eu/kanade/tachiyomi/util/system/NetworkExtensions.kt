@@ -14,30 +14,28 @@ val Context.wifiManager: WifiManager
     get() = getSystemService()!!
 
 fun Context.isOnline(): Boolean {
-    val activeNetwork = connectivityManager.activeNetwork ?: return false
-    val networkCapabilities = connectivityManager.getNetworkCapabilities(activeNetwork) ?: return false
-    val maxTransport = when {
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1 -> NetworkCapabilities.TRANSPORT_LOWPAN
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.O -> NetworkCapabilities.TRANSPORT_WIFI_AWARE
-        else -> NetworkCapabilities.TRANSPORT_VPN
+    val activeNetwork = connectivityManager.activeNetwork
+    if (activeNetwork != null) {
+        val networkCapabilities = connectivityManager.getNetworkCapabilities(activeNetwork)
+        if (networkCapabilities != null) {
+            val maxTransport = when {
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1 -> NetworkCapabilities.TRANSPORT_LOWPAN
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O -> NetworkCapabilities.TRANSPORT_WIFI_AWARE
+                else -> NetworkCapabilities.TRANSPORT_VPN
+            }
+            if ((NetworkCapabilities.TRANSPORT_CELLULAR..maxTransport).any(networkCapabilities::hasTransport)) {
+                return true
+            }
+        }
     }
-    return (NetworkCapabilities.TRANSPORT_CELLULAR..maxTransport).any(networkCapabilities::hasTransport)
+    @Suppress("DEPRECATION")
+    return connectivityManager.activeNetworkInfo?.isConnected == true
 }
 
 /**
  * Returns true if device is connected to Wifi.
  */
 fun Context.isConnectedToWifi(): Boolean {
-    if (!wifiManager.isWifiEnabled) return false
-
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-        val activeNetwork = connectivityManager.activeNetwork ?: return false
-        val networkCapabilities = connectivityManager.getNetworkCapabilities(activeNetwork) ?: return false
-
-        networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) &&
-            networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-    } else {
-        @Suppress("DEPRECATION")
-        wifiManager.connectionInfo.bssid != null
-    }
+    return activeNetworkState().isWifi
 }
+

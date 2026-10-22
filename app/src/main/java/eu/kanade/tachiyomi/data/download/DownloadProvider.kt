@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.data.download
 import android.content.ContentResolver
 import android.content.Context
 import android.os.Build
+import android.os.Environment
 import com.hippo.unifile.UniFile
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
@@ -54,7 +55,13 @@ class DownloadProvider(
         withContext(Dispatchers.IO) { createMangaDir(mangaTitle, source) }
 
     private fun createMangaDir(mangaTitle: String, source: Source): Result<UniFile> {
-        val downloadsDir = downloadsDir
+        var downloadsDir = downloadsDir
+        if (downloadsDir == null && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            val fallbackDir = File(Environment.getExternalStorageDirectory(), "Mihon/downloads")
+            if (fallbackDir.exists() || fallbackDir.mkdirs()) {
+                downloadsDir = UniFile.fromFile(fallbackDir)
+            }
+        }
         if (downloadsDir == null) {
             logcat(LogPriority.ERROR) { "Failed to create download directory" }
             return Result.failure(
@@ -65,7 +72,11 @@ class DownloadProvider(
         val sourceDirName = getSourceDirName(source)
         var sourceDir = downloadsDir.createDirectory(sourceDirName)
         if (sourceDir == null && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            downloadsDir.filePath?.let { path ->
+            val path = downloadsDir.filePath ?: StorageManager.resolveToFile(
+                context,
+                downloadsDir.uri.toString(),
+            )?.absolutePath
+            if (path != null) {
                 val f = File(path, sourceDirName)
                 if (f.exists() || f.mkdirs()) {
                     sourceDir = UniFile.fromFile(f)
@@ -83,7 +94,11 @@ class DownloadProvider(
         val mangaDirName = getMangaDirName(mangaTitle)
         var mangaDir = sourceDir.createDirectory(mangaDirName)
         if (mangaDir == null && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            sourceDir.filePath?.let { path ->
+            val path = sourceDir.filePath ?: StorageManager.resolveToFile(
+                context,
+                sourceDir.uri.toString(),
+            )?.absolutePath
+            if (path != null) {
                 val f = File(path, mangaDirName)
                 if (f.exists() || f.mkdirs()) {
                     mangaDir = UniFile.fromFile(f)
