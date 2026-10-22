@@ -44,14 +44,12 @@ class PluginAndroidBase : Plugin<Project> {
         }
 
         tasks.withType(L8DexDesugarLibTask::class.java).configureEach {
-            val desugarRules = layout.projectDirectory.file("desugar-rules.pro").asFile
-            if (desugarRules.exists()) {
-                keepRulesFiles.from(desugarRules)
-            }
             keepRulesConfigurations.addAll(
-                "-keep class j$.** { *; }",
-                "-keep interface j$.** { *; }",
-                "-dontobfuscate",
+                listOf(
+                    "-keep class j$.** { *; }",
+                    "-keep interface j$.** { *; }",
+                    "-dontobfuscate",
+                ),
             )
         }
     }
