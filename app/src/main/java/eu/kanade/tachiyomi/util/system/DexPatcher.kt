@@ -32,14 +32,20 @@ object DexPatcher {
                 0
             }
             val lastVersionCode = prefs.getInt("last_version_code", -1)
-            if (lastVersionCode != currentVersionCode) {
+            val baseApk = File(context.applicationInfo.sourceDir)
+            val baseModified = if (baseApk.exists()) baseApk.lastModified() else 0L
+            val lastBaseModified = prefs.getLong("last_base_modified", -1L)
+            if (lastVersionCode != currentVersionCode || lastBaseModified != baseModified) {
                 logcat(LogPriority.INFO) {
                     "App updated (code $lastVersionCode -> $currentVersionCode), clearing extension DEX caches"
                 }
                 File(context.codeCacheDir, PATCHED_DIR_NAME).deleteRecursively()
                 File(context.codeCacheDir, "ext_opt").deleteRecursively()
                 File(context.codeCacheDir, "time_compat.dex").delete()
-                prefs.edit().putInt("last_version_code", currentVersionCode).apply()
+                prefs.edit()
+                    .putInt("last_version_code", currentVersionCode)
+                    .putLong("last_base_modified", baseModified)
+                    .apply()
             }
         } catch (e: Exception) {
             logcat(LogPriority.WARN, e) { "Failed to clean DEX patcher cache on app update" }

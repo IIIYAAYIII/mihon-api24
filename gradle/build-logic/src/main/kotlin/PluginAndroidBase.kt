@@ -2,6 +2,7 @@ import com.android.build.api.dsl.ApplicationDefaultConfig
 import com.android.build.api.dsl.CommonExtension
 import com.android.build.api.dsl.CompileOptions
 import com.android.build.api.dsl.DefaultConfig
+import com.android.build.gradle.internal.tasks.L8DexDesugarLibTask
 import mihon.gradle.configurations.configureKotlin
 import mihon.gradle.extensions.android
 import mihon.gradle.extensions.configureTest
@@ -40,6 +41,18 @@ class PluginAndroidBase : Plugin<Project> {
 
         dependencies {
             coreLibraryDesugaring(libs.android.desugar)
+        }
+
+        tasks.withType(L8DexDesugarLibTask::class.java).configureEach {
+            val desugarRules = layout.projectDirectory.file("desugar-rules.pro").asFile
+            if (desugarRules.exists()) {
+                keepRulesFiles.from(desugarRules)
+            }
+            keepRulesConfigurations.addAll(
+                "-keep class j$.** { *; }",
+                "-keep interface j$.** { *; }",
+                "-dontobfuscate",
+            )
         }
     }
 }
